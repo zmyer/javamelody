@@ -349,10 +349,33 @@ public enum Parameter {
 	GRAPHITE_ADDRESS("graphite-address"),
 
 	/**
+	 * Address of the <a href='https://github.com/etsy/statsd'>StatsD</a> server to send metrics to,
+	 * for example: 11.22.33.44:8125 (null by default).
+	 */
+	STATSD_ADDRESS("statsd-address"),
+
+	/**
 	 * Namespace to use in <a href='https://aws.amazon.com/cloudwatch/'>AWS CloudWatch</a> to send metrics,
 	 * for example "MyCompany/MyAppDomain" (null by default).
 	 */
-	CLOUDWATCH_NAMESPACE("cloudwatch-namespace");
+	CLOUDWATCH_NAMESPACE("cloudwatch-namespace"),
+
+	/**
+	 * URL of the <a href='https://www.influxdata.com/time-series-platform/'>InfluxDB</a> server to send metrics to,
+	 * for example: http://11.22.33.44:8086/write?db=mydb (null by default).
+	 */
+	INFLUXDB_URL("influxdb-url"),
+
+	/**
+	 * API key of the <a href='https://www.datadoghq.com/'>Datadog</a> to send metrics,
+	 * for example: 9775a026f1ca7d1c6c5af9d94d9595a4 (null by default).
+	 */
+	DATADOG_API_KEY("datadog-api-key"),
+
+	/**
+	 * Includes last values of graphs when sending metrics to <a href='https://prometheus.io/'>Prometheus</a> (false by default).
+	 */
+	PROMETHEUS_INCLUDE_LAST_VALUE("prometheus-include-last-value");
 
 	private final String code;
 

@@ -194,6 +194,10 @@ public class MonitoringController {
 			} else if (HttpPart.JNLP.isPart(httpRequest)) {
 				final Range range = httpCookieManager.getRange(httpRequest, httpResponse);
 				doJnlp(httpRequest, httpResponse, range);
+			} else if (HttpParameter.REPORT.getParameterFrom(httpRequest) != null) {
+				final String reportName = URLDecoder
+						.decode(HttpParameter.REPORT.getParameterFrom(httpRequest), "UTF-8");
+				doCustomReport(httpRequest, httpResponse, reportName);
 			} else {
 				doReportCore(httpRequest, httpResponse, javaInformationsList);
 			}
@@ -204,7 +208,7 @@ public class MonitoringController {
 	}
 
 	private void doReportCore(HttpServletRequest httpRequest, HttpServletResponse httpResponse,
-			List<JavaInformations> javaInformationsList) throws IOException, ServletException {
+			List<JavaInformations> javaInformationsList) throws IOException {
 		final String format = HttpParameter.FORMAT.getParameterFrom(httpRequest);
 		if (HttpPart.LAST_VALUE.isPart(httpRequest)
 				&& !TransportFormat.isATransportFormat(format)) {
@@ -214,16 +218,17 @@ public class MonitoringController {
 			// par sécurité
 			Action.checkSystemActionsEnabled();
 			doJmxValue(httpResponse, HttpParameter.JMX_VALUE.getParameterFrom(httpRequest));
-		} else if (HttpParameter.REPORT.getParameterFrom(httpRequest) != null) {
-			final String reportName = URLDecoder
-					.decode(HttpParameter.REPORT.getParameterFrom(httpRequest), "UTF-8");
-			doCustomReport(httpRequest, httpResponse, reportName);
 		} else if (format == null || "html".equalsIgnoreCase(format)
 				|| HtmlController.HTML_BODY_FORMAT.equalsIgnoreCase(format)) {
 			doCompressedHtml(httpRequest, httpResponse, javaInformationsList);
 		} else if ("pdf".equalsIgnoreCase(format)) {
 			final PdfController pdfController = new PdfController(collector, collectorServer);
 			pdfController.doPdf(httpRequest, httpResponse, javaInformationsList);
+		} else if ("prometheus".equalsIgnoreCase(format)) {
+			httpResponse.setContentType("text/plain; version=0.0.4;charset=UTF-8");
+			final PrometheusController prometheusController = new PrometheusController(
+					javaInformationsList, collector, httpResponse.getWriter());
+			prometheusController.report();
 		} else {
 			doCompressedSerializable(httpRequest, httpResponse, javaInformationsList);
 		}

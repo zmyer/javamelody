@@ -30,7 +30,6 @@ abstract class MetricsPublisher {
 	static List<MetricsPublisher> getMetricsPublishers(
 			List<JavaInformations> javaInformationsList) {
 		assert javaInformationsList != null && !javaInformationsList.isEmpty();
-		final List<MetricsPublisher> metricsPublishers = new ArrayList<MetricsPublisher>();
 		final StringBuilder sb = new StringBuilder();
 		for (final JavaInformations javaInformations : javaInformationsList) {
 			if (sb.length() != 0) {
@@ -38,15 +37,39 @@ abstract class MetricsPublisher {
 			}
 			sb.append(javaInformations.getHost().replaceFirst("@.*", ""));
 		}
-		final String contextPath = javaInformationsList.get(0).getContextPath();
+		String contextPath = javaInformationsList.get(0).getContextPath();
+		if (contextPath == null) {
+			// for NodesCollector in Jenkins, contextPath is null
+			contextPath = "NA";
+		} else if (contextPath.isEmpty()) {
+			// for CloudWatch, InfluxDB, Datadog, a tag/dimension is not supposed to be empty
+			contextPath = "/";
+		}
 		final String hosts = sb.toString();
+		return getMetricsPublishers(contextPath, hosts);
+	}
+
+	private static List<MetricsPublisher> getMetricsPublishers(String contextPath, String hosts) {
+		final List<MetricsPublisher> metricsPublishers = new ArrayList<MetricsPublisher>();
 		final Graphite graphite = Graphite.getInstance(contextPath, hosts);
+		final Statsd statsd = Statsd.getInstance(contextPath, hosts);
 		final CloudWatch cloudWatch = CloudWatch.getInstance(contextPath, hosts);
+		final InfluxDB influxDb = InfluxDB.getInstance(contextPath, hosts);
+		final Datadog datadog = Datadog.getInstance(contextPath, hosts);
 		if (graphite != null) {
 			metricsPublishers.add(graphite);
 		}
+		if (statsd != null) {
+			metricsPublishers.add(statsd);
+		}
 		if (cloudWatch != null) {
 			metricsPublishers.add(cloudWatch);
+		}
+		if (influxDb != null) {
+			metricsPublishers.add(influxDb);
+		}
+		if (datadog != null) {
+			metricsPublishers.add(datadog);
 		}
 		if (metricsPublishers.isEmpty()) {
 			return Collections.emptyList();
